@@ -221,8 +221,10 @@ assign tms_reset = tms_q1 & tms_q2 & tms_q3 & tms_q4 & tms_pad_i;    // 5 consec
 // test_logic_reset state
 always @ (posedge tck_pad_i or posedge trst_pad_i)
 begin
+  // JTAG test reset pad is active high.
   if(trst_pad_i)
     test_logic_reset<=#1 1'b1;
+  // 5 consecutive TMS=1 causes reset of TAP.
   else if (tms_reset)
     test_logic_reset<=#1 1'b1;
   else
@@ -468,7 +470,7 @@ begin
   else if(capture_ir)
     jtag_ir <= #1 4'b0101;          // This value is fixed for easier fault detection
   else if(shift_ir)
-    jtag_ir[`IR_LENGTH-1:0] <= #1 {tdi_pad_i, jtag_ir[`IR_LENGTH-1:1]};
+    jtag_ir[`IR_LENGTH-1:0] <= #1 {tdi_pad_i, jtag_ir[`IR_LENGTH-1:1]}; // Data input is shifted into MSB of jtag_ir. LSB of jtag_ir is shifted out to TDO.
 end
 
 always @ (negedge tck_pad_i)
@@ -563,6 +565,7 @@ end
 // Updating jtag_ir (Instruction Register)
 always @ (latched_jtag_ir)
 begin
+  // Avoiding latches by assigning default values to all signals
   extest_select           = 1'b0;
   sample_preload_select   = 1'b0;
   idcode_select           = 1'b0;
